@@ -1,35 +1,42 @@
-// Simple in-memory rate limiter (per Vercel function instance)
-const rateLimitStore = new Map();
+// Persistent rate limiter using Upstash Redis (via Vercel KV)
 const RATE_LIMIT = 10; // requests per window
-const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_WINDOW_SECONDS = 60 * 60; // 1 hour
 
-function checkRateLimit(ip) {
-  const now = Date.now();
-  const record = rateLimitStore.get(ip);
+async function checkRateLimit(ip) {
+  const key = `ratelimit:${ip}`;
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
 
-  if (!record || now - record.windowStart > RATE_WINDOW_MS) {
-    // New window
-    rateLimitStore.set(ip, { count: 1, windowStart: now });
-    return { allowed: true, remaining: RATE_LIMIT - 1 };
+  if (!url || !token) {
+    // Fail open if KV isn't configured — better to serve than to block everyone
+    console.warn('KV not configured, skipping rate limit');
+    return { allowed: true };
   }
 
-  if (record.count >= RATE_LIMIT) {
-    const resetIn = Math.ceil((RATE_WINDOW_MS - (now - record.windowStart)) / 60000);
+  // Atomically increment counter
+  const incrRes = await fetch(`${url}/incr/${key}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const { result: count } = await incrRes.json();
+
+  // If this is the first hit in the window, set expiry
+  if (count === 1) {
+    await fetch(`${url}/expire/${key}/${RATE_WINDOW_SECONDS}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  }
+
+  if (count > RATE_LIMIT) {
+    // Get remaining TTL for a helpful error message
+    const ttlRes = await fetch(`${url}/ttl/${key}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const { result: ttl } = await ttlRes.json();
+    const resetIn = Math.max(1, Math.ceil(ttl / 60));
     return { allowed: false, resetIn };
   }
 
-  record.count++;
-  return { allowed: true, remaining: RATE_LIMIT - record.count };
-}
-
-// Clean up old entries periodically to prevent memory bloat
-function cleanupOldEntries() {
-  const now = Date.now();
-  for (const [ip, record] of rateLimitStore.entries()) {
-    if (now - record.windowStart > RATE_WINDOW_MS) {
-      rateLimitStore.delete(ip);
-    }
-  }
+  return { allowed: true, remaining: RATE_LIMIT - count };
 }
 
 export default async function handler(req, res) {
@@ -37,21 +44,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Get client IP (Vercel forwards it in this header)
   const ip = req.headers['x-forwarded-for']?.split(',')[0].trim()
           || req.headers['x-real-ip']
           || 'unknown';
 
   // Rate limit check
-  const limitCheck = checkRateLimit(ip);
+  const limitCheck = await checkRateLimit(ip);
   if (!limitCheck.allowed) {
     return res.status(429).json({
       error: `The scribe grows weary. You've commissioned enough letters for now — please return in about ${limitCheck.resetIn} minute${limitCheck.resetIn === 1 ? '' : 's'}.`
     });
   }
-
-  // Occasional cleanup (1% of requests)
-  if (Math.random() < 0.01) cleanupOldEntries();
 
   try {
     const { recipient, situation, letterType, toneKey, toneGuide, intensity, sender } = req.body;
@@ -60,7 +63,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Input length guardrails (prevent giant prompts eating credits)
     if (situation.length > 2000 || (recipient || '').length > 200 || (sender || '').length > 200) {
       return res.status(400).json({ error: 'Please keep your inputs under a reasonable length.' });
     }
