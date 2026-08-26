@@ -1,15 +1,68 @@
+// Simple in-memory rate limiter (per Vercel function instance)
+const rateLimitStore = new Map();
+const RATE_LIMIT = 10; // requests per window
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+
+  if (!record || now - record.windowStart > RATE_WINDOW_MS) {
+    // New window
+    rateLimitStore.set(ip, { count: 1, windowStart: now });
+    return { allowed: true, remaining: RATE_LIMIT - 1 };
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    const resetIn = Math.ceil((RATE_WINDOW_MS - (now - record.windowStart)) / 60000);
+    return { allowed: false, resetIn };
+  }
+
+  record.count++;
+  return { allowed: true, remaining: RATE_LIMIT - record.count };
+}
+
+// Clean up old entries periodically to prevent memory bloat
+function cleanupOldEntries() {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitStore.entries()) {
+    if (now - record.windowStart > RATE_WINDOW_MS) {
+      rateLimitStore.delete(ip);
+    }
+  }
+}
+
 export default async function handler(req, res) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Get client IP (Vercel forwards it in this header)
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim()
+          || req.headers['x-real-ip']
+          || 'unknown';
+
+  // Rate limit check
+  const limitCheck = checkRateLimit(ip);
+  if (!limitCheck.allowed) {
+    return res.status(429).json({
+      error: `The scribe grows weary. You've commissioned enough letters for now — please return in about ${limitCheck.resetIn} minute${limitCheck.resetIn === 1 ? '' : 's'}.`
+    });
+  }
+
+  // Occasional cleanup (1% of requests)
+  if (Math.random() < 0.01) cleanupOldEntries();
+
   try {
     const { recipient, situation, letterType, toneKey, toneGuide, intensity, sender } = req.body;
 
-    // Basic validation
     if (!situation || !toneGuide) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Input length guardrails (prevent giant prompts eating credits)
+    if (situation.length > 2000 || (recipient || '').length > 200 || (sender || '').length > 200) {
+      return res.status(400).json({ error: 'Please keep your inputs under a reasonable length.' });
     }
 
     const prompt = `You are the head scribe of The Royal Correspondence Bureau, a tongue-in-cheek service that writes gloriously theatrical letters for everyday situations.
