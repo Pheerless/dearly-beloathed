@@ -157,7 +157,12 @@ async function generateLetter(){
     });
     const data = await response.json();
     clearInterval(loadTimer);
-    if(!response.ok || !data.letter){ throw new Error(data.error || "No letter returned"); }
+    if(!response.ok || !data.letter){
+      const errorMsg = data.error || "The raven was lost in a storm.";
+      $("desk").innerHTML = `<div class="error-box"><p><strong>${errorMsg}</strong></p><p style="margin-top:8px;font-size:14px">Press the seal once more when ready.</p></div>`;
+      btn.disabled = false;
+      return;
+    }
     $("desk").innerHTML = `<div class="letter-head"><span>Correspondence No. ${Math.floor(Math.random()*9000+1000)}</span><button class="copy-btn" id="copyBtn">Copy</button></div><div class="letter-body" id="letterBody"></div>`;
     $("letterBody").textContent = data.letter;
     $("copyBtn").addEventListener("click", ()=>{ navigator.clipboard.writeText(data.letter); $("copyBtn").textContent = "Copied!"; setTimeout(()=> $("copyBtn").textContent = "Copy", 1400); });
