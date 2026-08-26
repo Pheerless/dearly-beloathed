@@ -107,7 +107,11 @@ Rules:
     const textBlock = (data.content || []).find(b => b.type === 'text');
 
     if (!textBlock) {
-      return res.status(500).json({ error: 'No letter returned' });
+        if(!response.ok || !data.letter){
+      const errorMsg = data.error || "The raven was lost in a storm.";
+      $("desk").innerHTML = `<div class="error-box"><p><strong>${errorMsg}</strong></p><p style="margin-top:8px;font-size:14px">Press the seal once more when ready.</p></div>`;
+      btn.disabled = false;
+      return;
     }
 
     return res.status(200).json({ letter: textBlock.text.trim() });
