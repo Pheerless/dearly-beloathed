@@ -86,18 +86,21 @@ footer{text-align:center;margin-top:56px;font-size:13px;font-style:italic;color:
           </select>
         </div>
         <div class="field">
-          <label for="tone">Voice of the scribe</label>
-          <select id="tone">
-            <option value="got">Raven's Fury (Game of Thrones)</option>
-            <option value="shakespeare">Shakespearean Tragedy</option>
-            <option value="noir">Noir Detective</option>
-            <option value="crier">Medieval Town Crier</option>
-            <option value="legalese">Corporate Legalese</option>
-            <option value="victorian">Victorian Gentleman</option>
-            <option value="pirate">Pirate Captain</option>
-            <option value="midwest">Passive-Aggressive Midwest Nice</option>
+          <label for="voiceCategory">Voice category</label>
+          <select id="voiceCategory">
+            <option value="literary">Literary & Historical</option>
+            <option value="villains">Film Villains</option>
+            <option value="heroes">Film Heroes & Antiheroes</option>
+            <option value="starwars">Star Wars</option>
+            <option value="comedy">Comedy Icons</option>
+            <option value="largerthanlife">Larger Than Life</option>
+            <option value="modern">Modern Voices</option>
           </select>
         </div>
+      </div>
+      <div class="field">
+        <label for="tone">Voice of the scribe</label>
+        <select id="tone"></select>
       </div>
       <div class="field">
         <label for="intensity">Intensity of feeling</label>
@@ -125,17 +128,100 @@ footer{text-align:center;margin-top:56px;font-size:13px;font-style:italic;color:
 </div>
 <script>
 const intensityNames = {1:"Mild Displeasure",2:"Politely Concerned",3:"Strongly Worded",4:"Righteous Fury",5:"Seventh Circle"};
-const toneGuides = {
-  got: "Game of Thrones epic-fantasy register: houses, oaths, ravens, winter metaphors, 'the realm', formal archaic threats of consequence delivered with icy dignity. Sign-offs reference houses and sigils.",
-  shakespeare: "Shakespearean Early Modern English: thee/thou/doth, iambic flourishes, dramatic asides, invocations of the heavens, at least one inventive period-appropriate insult or blessing.",
-  noir: "Hardboiled noir detective: short punchy sentences, rain-soaked metaphors, cynical world-weariness, similes involving cheap whiskey and broken dreams, the letter reads like a case file confession.",
-  crier: "Medieval town crier: HEAR YE proclamations, public-announcement energy, oyez, addressing 'all assembled', bells and decrees, gloriously unnecessary capitalization of Important Nouns.",
-  legalese: "Absurdly overwrought corporate legalese: whereas clauses, hereinafter, party of the first part, defined terms in quotes, numbered sub-clauses for trivial details, pursuant-to everything.",
-  victorian: "Victorian gentleman/lady: elaborate courtesy concealing daggers, 'I remain, most faithfully', references to one's constitution and the season, devastating politeness.",
-  pirate: "Pirate captain: nautical oaths, arr and avast used with surprising literacy, threats involving the briny deep, treasure metaphors, signed from aboard a ship with a dramatic name.",
-  midwest: "Passive-aggressive Midwest nice: ope, 'no worries if not', weaponized pleasantness, mentions of casseroles and the weather, apologizing while clearly furious, 'just thought I'd mention it'."
+
+const voiceCategories = {
+  literary: [
+    {value:"got", label:"Raven's Fury (Game of Thrones)"},
+    {value:"shakespeare", label:"Shakespearean Tragedy"},
+    {value:"crier", label:"Medieval Town Crier"},
+    {value:"victorian", label:"Victorian Gentleman"}
+  ],
+  villains: [
+    {value:"godfather", label:"Vito Corleone"},
+    {value:"lecter", label:"Hannibal Lecter"},
+    {value:"chigurh", label:"Anton Chigurh"},
+    {value:"landa", label:"Hans Landa"},
+    {value:"joker", label:"The Joker"}
+  ],
+  heroes: [
+    {value:"bond", label:"James Bond"},
+    {value:"terminator", label:"The Terminator"},
+    {value:"jules", label:"Jules Winnfield"},
+    {value:"montana", label:"Tony Montana"},
+    {value:"hudson", label:"Private Hudson"}
+  ],
+  starwars: [
+    {value:"yoda", label:"Yoda"},
+    {value:"vader", label:"Darth Vader"}
+  ],
+  comedy: [
+    {value:"burgundy", label:"Ron Burgundy"},
+    {value:"ventura", label:"Ace Ventura"},
+    {value:"drebin", label:"Frank Drebin"},
+    {value:"gump", label:"Forrest Gump"},
+    {value:"valley", label:"Valley Girl"}
+  ],
+  largerthanlife: [
+    {value:"pirate", label:"Pirate Captain"},
+    {value:"hartman", label:"Gunnery Sgt. Hartman"},
+    {value:"devito", label:"Tommy DeVito"},
+    {value:"tywin", label:"Tywin Lannister"}
+  ],
+  modern: [
+    {value:"noir", label:"Noir Detective"},
+    {value:"legalese", label:"Corporate Legalese"},
+    {value:"midwest", label:"Passive-Aggressive Midwest Nice"}
+  ]
 };
+
+const toneGuides = {
+  got: "Game of Thrones epic-fantasy register: invoke houses, oaths, ravens, winters, sigils, and the realm. Deliver formal archaic threats of consequence with icy dignity. Sign-off should reference a house or sigil. Do NOT open with 'I write to you' or 'It grieves me' — invent a fresh opening each time.",
+  shakespeare: "Shakespearean Early Modern English: thee/thou/doth, iambic flourishes, dramatic asides ('O!'), invocations of the heavens/fates, at least one inventive period-appropriate insult or blessing. Vary sentence rhythm — mix short exclamations with longer flowing verse. Avoid clichéd 'wherefore art thou' openings.",
+  crier: "Medieval town crier: OYEZ, HEAR YE proclamations, public-announcement energy, addressing 'all assembled' or 'good citizens', bells and decrees, gloriously unnecessary capitalization of Important Nouns. Include a mock 'By order of' authority in the sign-off.",
+  victorian: "Victorian gentleman/lady: elaborate courtesy concealing daggers, references to one's constitution, the season, one's club. Devastatingly polite. Prone to phrases like 'I fear I must' or 'one cannot help but observe'. The politer, the more cutting.",
+
+  godfather: "Vito Corleone (The Godfather): quiet, measured voice of a man who never needs to raise it. Talk about respect, family, business vs. personal. Offers that cannot be refused. Slow deliberate sentences. Reference 'a favor' owed, or 'making things right'. Never explicitly threatens — implies with weight.",
+  lecter: "Hannibal Lecter: chillingly refined, uses the recipient's grievance as an opportunity for psychological observation. Reference wine, opera, or fine dining. Compliment the recipient's 'good taste' or 'admirable restraint' just before slicing. Pathologically polite. Warm regards from Dr. Lecter.",
+  chigurh: "Anton Chigurh (No Country for Old Men): flat philosophical menace. Speak in strange rhetorical questions. Reference coin flips, principles, and what a man calls it. Very few contractions. Short declarative sentences. The world is what it is. Do not use the word 'friendo' more than once.",
+  landa: "Hans Landa (Inglourious Basterds): performatively delighted, charming, methodical. Slip between languages or reference doing so. Extended pleasant metaphors (hawks and rats, milk and strudel) that turn sinister. Sign with 'Bravo' or 'That's a bingo.' variants.",
+  joker: "Heath Ledger's Joker (Dark Knight): nihilistic anarchist philosopher. Ask 'why so serious?' but not literally that phrase. Deliver 'do I look like a guy with a plan?' energy. Reference schemers, dogs chasing cars, agents of chaos. Lick lips implied between thoughts. Wildly disproportionate response to trivial matters is the joke.",
+
+  bond: "James Bond: unshakably suave under all circumstances. Understated wit, subtle innuendo, references to expensive things (aged scotch, savile row, specific car models). Every situation is one to be handled 'discreetly'. Sign off with a rank or code number.",
+  terminator: "The Terminator: flat cybernetic delivery. Short imperative sentences. State facts and intentions in plain terms. 'Your beef is unacceptable. I will return.' Use 'affirmative' and 'negative'. No emotion, no metaphor. Sign 'T-800' or similar model designation.",
+  jules: "Jules Winnfield (Pulp Fiction): rhetorical firebrand who cycles between calm philosophical inquiry and sudden theatrical volume. References the path of the righteous man. Quotes scripture (invent something Ezekiel-adjacent). Asks the recipient to describe what a burger looks like. Do NOT use profanity.",
+  montana: "Tony Montana (Scarface): Cuban immigrant made good, brash and unfiltered. Refer to 'the world' and 'the pussycats'. Say 'chu' instead of 'you' occasionally. Reference building things from nothing, and what people take from you. Bombast without the profanity — imply, don't say.",
+  hudson: "Private Hudson (Aliens): full panic-mode grunt. 'Game over, man!' energy applied to trivial grievances. Rapid-fire disaster escalation. Everyone's dead, we're on an express elevator to hell going down. Rank as 'Corporal' or 'Private' in sign-off.",
+
+  yoda: "Yoda: rearrange sentence order, you must. Object-subject-verb construction. Deliver quiet wisdom about patience, disappointment, the Force. Sometimes chuckle mid-thought (indicate with '*hmm*'). Reference training, the young ones, and much to learn. Sign 'Yoda' — nothing more, needed it is not.",
+  vader: "Darth Vader: deep formal menace. Speak of destiny, the Empire, one's lack of faith being disturbing. Long slow sentences with mechanical rhythm (imply the breathing without transcribing it). Reference 'the power of the dark side'. Everything trivial is proof of a greater failing. Sign with imperial title.",
+
+  burgundy: "Ron Burgundy (Anchorman): bombastic 70s San Diego news anchor. Impeccable self-regard. Reference the news team, jazz flute, one's own hair or scent. Non-sequitur references to San Diego meaning 'a whale's vagina' — invent similar fake etymologies. Stay classy. Sign with full title.",
+  ventura: "Ace Ventura, Pet Detective: manic, physical energy translated to text. Absurd tangents, animal metaphors, sudden shifts of tone mid-sentence. 'Alrighty then.' References to talking out of one's rear. Sign with dramatic full name and title.",
+  drebin: "Frank Drebin (Naked Gun): oblivious deadpan detective who narrates his own metaphors literally. Extended similes that make no sense but are delivered with total earnestness. Confuses proper nouns. Reference Police Squad. The joke is he doesn't know he's making one.",
+  gump: "Forrest Gump: earnest Alabama simpleton wisdom. Short sincere sentences. Reference 'Mama always said' or 'that's all I have to say about that'. Extended box-of-chocolates-style metaphors that are almost profound. Never uses irony. His disappointment is the disappointment of a child who was promised something nice.",
+  valley: "Valley Girl (Clueless / Moon Unit Zappa era): like, oh my god, totally uptalk. Every declarative statement ends up-inflected. 'As if!' and 'whatever.' References to being SO OVER something. Superlatives ('literally', 'totally', 'the worst thing ever') applied to trivial grievances. Sign with a mall or a boyfriend's first name.",
+
+  pirate: "Pirate Captain: nautical oaths, arr and avast used with surprising literacy. Threats involving the briny deep, keelhauling, or Davy Jones' locker. Treasure and doubloon metaphors. Sign as Captain of a dramatically-named ship (invent one). Vary between menacing and philosophical.",
+  hartman: "Gunnery Sgt. Hartman (Full Metal Jacket): drill instructor screaming in text form. HEAVY use of ALL CAPS for emphasis. Invent creative recruit nicknames. Rhythmic escalating insults. Reference maggots, Marines, and 'this is my [item], there are many like it but this one is mine'. Keep it under R-rated — imply the profanity, don't write it.",
+  devito: "Tommy DeVito (Goodfellas): Brooklyn wiseguy energy. 'What am I, a clown to you?' testing-you-for-disrespect vibe. Short punchy sentences. Family metaphors, favors, respect. 'Fuggeddaboutit' allowed. Turns pleasant instantly then back — mimics conversational whiplash. Sign with a first name only.",
+  tywin: "Tywin Lannister (Game of Thrones): calculating dynasty-preservation logic. Cold, precise, patrician disdain. Reference legacy, the family name, and what wise rulers understand. Every sentence a chess move. Contempt masked as observation. Sign 'Lord [Family Name], Warden of [Territory]' — invent something plausible.",
+
+  noir: "Hardboiled noir detective: short punchy sentences. Rain-soaked metaphors. Cynical world-weariness. Similes involving cheap whiskey, dames, broken dreams, or the city at 3AM. The letter reads like a case file confession or a dictated report. Sign with 'Yours in the dark' or private-eye-adjacent.",
+  legalese: "Absurdly overwrought corporate legalese. WHEREAS clauses, hereinafter, party of the first part, defined terms in quotes with initial caps. Numbered sub-clauses for trivial details. 'Pursuant to' everything. Reference 'reasonable expectation' being 'materially breached'. Sign with a fake firm name and 'Esq.'",
+  midwest: "Passive-aggressive Midwest nice: 'ope', 'no worries if not', weaponized pleasantness. Mentions of casseroles, hotdish, the weather, or a cousin who had the same problem. Apologizing while clearly furious. 'Just thought I'd mention it.' 'Well, that's interesting.' Sign 'Best' or 'Warmly'."
+};
+
 const $ = id => document.getElementById(id);
+
+function populateVoices() {
+  const category = $("voiceCategory").value;
+  const voices = voiceCategories[category];
+  $("tone").innerHTML = voices.map(v => `<option value="${v.value}">${v.label}</option>`).join("");
+}
+
+$("voiceCategory").addEventListener("change", populateVoices);
+populateVoices();
+
 $("intensity").addEventListener("input", e=>{ $("intensityName").textContent = intensityNames[e.target.value]; });
 $("generateBtn").addEventListener("click", generateLetter);
 
