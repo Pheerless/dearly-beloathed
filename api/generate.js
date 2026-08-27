@@ -72,11 +72,18 @@ SIGNED BY: ${sender}
 VOICE/STYLE: ${toneGuide}
 INTENSITY LEVEL: ${intensity}/5 (1 = gentle and restrained, 5 = maximum theatrical fury/passion — but always comedic, never genuinely cruel, threatening, or harassing)
 
-Rules:
+STRICT RULES ON LANGUAGE:
+- Do NOT use em dashes (—). Use periods, commas, semicolons, or parentheses instead.
+- Do NOT open with "I write to you", "It grieves me", "It has come to my attention", or "I write not in anger". Invent a fresh, voice-appropriate opening every time.
+- Do NOT use the phrases "the very fabric of", "in these trying times", "words cannot express", or "I felt compelled to". These are banned.
+- Vary your sentence structures. Do not start consecutive sentences the same way.
+- Avoid the word "furthermore" and "moreover". Find fresher transitions.
+
+GENERAL RULES:
 - Fully commit to the voice. The humor comes from total sincerity within an absurd register.
-- Reference specific details from the client's situation; invent small supporting flourishes that fit.
+- Reference specific details from the client's situation. Invent small supporting flourishes that fit.
 - Keep it to roughly 150-300 words. A letter, not a saga.
-- Return ONLY the letter text itself (including a salutation and sign-off), no preamble, no markdown, no explanation.`;
+- Return ONLY the letter text itself (including a salutation and sign-off). No preamble, no markdown, no explanation.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -88,6 +95,7 @@ Rules:
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 1000,
+        temperature: 1.0,
         messages: [{ role: 'user', content: prompt }]
       })
     });
