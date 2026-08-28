@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --green:#1E3A2F; --green-deep:#152B22;
@@ -57,6 +58,22 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;hei
 .copy-btn:hover{background:var(--wax-dark);color:var(--ivory)}
 .error-box{margin:auto;text-align:center;color:var(--wax-dark);font-size:17px}
 footer{text-align:center;margin-top:56px;font-size:13px;font-style:italic;color:rgba(245,239,223,.6)}
+.action-bar{margin-top:22px;padding-top:18px;border-top:1px solid rgba(142,44,33,.2);display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.action-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:none;border:1px solid var(--wax-dark);color:var(--wax-dark);border-radius:3px;padding:9px 14px;cursor:pointer;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.action-btn:hover:not(:disabled){background:var(--wax-dark);color:var(--ivory)}
+.action-btn:disabled{opacity:.5;cursor:wait}
+.action-btn.primary{background:var(--wax-dark);color:var(--ivory)}
+.action-btn.primary:hover:not(:disabled){background:var(--wax);color:var(--ivory)}
+.share-template{position:fixed;left:-9999px;top:0;width:680px;background:#F5EFDF;background-image:radial-gradient(ellipse at 20% 15%, rgba(212,177,67,.08), transparent 60%), radial-gradient(ellipse at 80% 90%, rgba(142,44,33,.06), transparent 55%);padding:60px 55px 50px;font-family:'Crimson Pro',serif;color:#1F1B16;box-sizing:border-box}
+.share-template .st-crest{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#8E2C21;text-align:center;margin-bottom:8px}
+.share-template .st-title{font-family:'IM Fell English',serif;font-size:38px;text-align:center;color:#1F1B16;margin-bottom:6px;line-height:1.1}
+.share-template .st-title em{font-style:italic;font-weight:600}
+.share-template .st-subtitle{text-align:center;font-style:italic;font-size:14px;color:rgba(31,27,22,.65);margin-bottom:20px}
+.share-template .st-divider{width:120px;height:1px;margin:0 auto 26px;background:linear-gradient(90deg,transparent,#8E2C21,transparent)}
+.share-template .st-voice{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5C1A11;text-align:center;margin-bottom:22px}
+.share-template .st-letter{font-size:16px;line-height:1.7;white-space:pre-wrap;color:#1F1B16;margin-bottom:30px}
+.share-template .st-footer{border-top:1px solid rgba(142,44,33,.25);padding-top:16px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#5C1A11}
+.share-template .st-seal{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #b3392a, #8E2C21 55%, #5C1A11 100%);display:inline-block;vertical-align:middle;margin-right:10px;box-shadow:inset 0 0 0 2px rgba(245,239,223,.2)}
 </style>
 </head>
 <body>
@@ -126,6 +143,21 @@ footer{text-align:center;margin-top:56px;font-size:13px;font-style:italic;color:
   </div>
   <footer>No actual ravens were exhausted in the making of this correspondence</footer>
 </div>
+
+<!-- Hidden template used only for image generation -->
+<div class="share-template" id="shareTemplate">
+  <div class="st-crest">By Royal Charter</div>
+  <div class="st-title">Dearly <em>Beloathed</em></div>
+  <div class="st-subtitle">Grievances, sealed with theatrical wax</div>
+  <div class="st-divider"></div>
+  <div class="st-voice" id="stVoice"></div>
+  <div class="st-letter" id="stLetter"></div>
+  <div class="st-footer">
+    <div><span class="st-seal"></span>Correspondence No. <span id="stCorrespondenceNo"></span></div>
+    <div>dearlybeloathed.com</div>
+  </div>
+</div>
+
 <script>
 const intensityNames = {1:"Mild Displeasure",2:"Politely Concerned",3:"Strongly Worded",4:"Righteous Fury",5:"Seventh Circle"};
 
@@ -175,37 +207,31 @@ const voiceCategories = {
 };
 
 const toneGuides = {
-  got: "Game of Thrones epic-fantasy register: invoke houses, oaths, ravens, winters, sigils, and the realm. Deliver formal archaic threats of consequence with icy dignity. Sign-off should reference a house or sigil. Do NOT open with 'I write to you' or 'It grieves me' — invent a fresh opening each time.",
-  shakespeare: "Shakespearean Early Modern English: thee/thou/doth, iambic flourishes, dramatic asides ('O!'), invocations of the heavens/fates, at least one inventive period-appropriate insult or blessing. Vary sentence rhythm — mix short exclamations with longer flowing verse. Avoid clichéd 'wherefore art thou' openings.",
+  got: "Game of Thrones epic-fantasy register: invoke houses, oaths, ravens, winters, sigils, and the realm. Deliver formal archaic threats of consequence with icy dignity. Sign-off should reference a house or sigil. Do NOT open with 'I write to you' or 'It grieves me' - invent a fresh opening each time.",
+  shakespeare: "Shakespearean Early Modern English: thee/thou/doth, iambic flourishes, dramatic asides ('O!'), invocations of the heavens/fates, at least one inventive period-appropriate insult or blessing. Vary sentence rhythm - mix short exclamations with longer flowing verse. Avoid cliched 'wherefore art thou' openings.",
   crier: "Medieval town crier: OYEZ, HEAR YE proclamations, public-announcement energy, addressing 'all assembled' or 'good citizens', bells and decrees, gloriously unnecessary capitalization of Important Nouns. Include a mock 'By order of' authority in the sign-off.",
   victorian: "Victorian gentleman/lady: elaborate courtesy concealing daggers, references to one's constitution, the season, one's club. Devastatingly polite. Prone to phrases like 'I fear I must' or 'one cannot help but observe'. The politer, the more cutting.",
-
-  godfather: "Vito Corleone (The Godfather): quiet, measured voice of a man who never needs to raise it. Talk about respect, family, business vs. personal. Offers that cannot be refused. Slow deliberate sentences. Reference 'a favor' owed, or 'making things right'. Never explicitly threatens — implies with weight.",
+  godfather: "Vito Corleone (The Godfather): quiet, measured voice of a man who never needs to raise it. Talk about respect, family, business vs. personal. Offers that cannot be refused. Slow deliberate sentences. Reference 'a favor' owed, or 'making things right'. Never explicitly threatens - implies with weight.",
   lecter: "Hannibal Lecter: chillingly refined, uses the recipient's grievance as an opportunity for psychological observation. Reference wine, opera, or fine dining. Compliment the recipient's 'good taste' or 'admirable restraint' just before slicing. Pathologically polite. Warm regards from Dr. Lecter.",
   chigurh: "Anton Chigurh (No Country for Old Men): flat philosophical menace. Speak in strange rhetorical questions. Reference coin flips, principles, and what a man calls it. Very few contractions. Short declarative sentences. The world is what it is. Do not use the word 'friendo' more than once.",
   landa: "Hans Landa (Inglourious Basterds): performatively delighted, charming, methodical. Slip between languages or reference doing so. Extended pleasant metaphors (hawks and rats, milk and strudel) that turn sinister. Sign with 'Bravo' or 'That's a bingo.' variants.",
   joker: "Heath Ledger's Joker (Dark Knight): nihilistic anarchist philosopher. Ask 'why so serious?' but not literally that phrase. Deliver 'do I look like a guy with a plan?' energy. Reference schemers, dogs chasing cars, agents of chaos. Lick lips implied between thoughts. Wildly disproportionate response to trivial matters is the joke.",
-
   bond: "James Bond: unshakably suave under all circumstances. Understated wit, subtle innuendo, references to expensive things (aged scotch, savile row, specific car models). Every situation is one to be handled 'discreetly'. Sign off with a rank or code number.",
   terminator: "The Terminator: flat cybernetic delivery. Short imperative sentences. State facts and intentions in plain terms. 'Your beef is unacceptable. I will return.' Use 'affirmative' and 'negative'. No emotion, no metaphor. Sign 'T-800' or similar model designation.",
   jules: "Jules Winnfield (Pulp Fiction): rhetorical firebrand who cycles between calm philosophical inquiry and sudden theatrical volume. References the path of the righteous man. Quotes scripture (invent something Ezekiel-adjacent). Asks the recipient to describe what a burger looks like. Do NOT use profanity.",
-  montana: "Tony Montana (Scarface): Cuban immigrant made good, brash and unfiltered. Refer to 'the world' and 'the pussycats'. Say 'chu' instead of 'you' occasionally. Reference building things from nothing, and what people take from you. Bombast without the profanity — imply, don't say.",
+  montana: "Tony Montana (Scarface): Cuban immigrant made good, brash and unfiltered. Refer to 'the world' and 'the pussycats'. Say 'chu' instead of 'you' occasionally. Reference building things from nothing, and what people take from you. Bombast without the profanity - imply, don't say.",
   hudson: "Private Hudson (Aliens): full panic-mode grunt. 'Game over, man!' energy applied to trivial grievances. Rapid-fire disaster escalation. Everyone's dead, we're on an express elevator to hell going down. Rank as 'Corporal' or 'Private' in sign-off.",
-
-  yoda: "Yoda: rearrange sentence order, you must. Object-subject-verb construction. Deliver quiet wisdom about patience, disappointment, the Force. Sometimes chuckle mid-thought (indicate with '*hmm*'). Reference training, the young ones, and much to learn. Sign 'Yoda' — nothing more, needed it is not.",
+  yoda: "Yoda: rearrange sentence order, you must. Object-subject-verb construction. Deliver quiet wisdom about patience, disappointment, the Force. Sometimes chuckle mid-thought (indicate with '*hmm*'). Reference training, the young ones, and much to learn. Sign 'Yoda' - nothing more, needed it is not.",
   vader: "Darth Vader: deep formal menace. Speak of destiny, the Empire, one's lack of faith being disturbing. Long slow sentences with mechanical rhythm (imply the breathing without transcribing it). Reference 'the power of the dark side'. Everything trivial is proof of a greater failing. Sign with imperial title.",
-
-  burgundy: "Ron Burgundy (Anchorman): bombastic 70s San Diego news anchor. Impeccable self-regard. Reference the news team, jazz flute, one's own hair or scent. Non-sequitur references to San Diego meaning 'a whale's vagina' — invent similar fake etymologies. Stay classy. Sign with full title.",
+  burgundy: "Ron Burgundy (Anchorman): bombastic 70s San Diego news anchor. Impeccable self-regard. Reference the news team, jazz flute, one's own hair or scent. Non-sequitur references to San Diego meaning 'a whale's vagina' - invent similar fake etymologies. Stay classy. Sign with full title.",
   ventura: "Ace Ventura, Pet Detective: manic, physical energy translated to text. Absurd tangents, animal metaphors, sudden shifts of tone mid-sentence. 'Alrighty then.' References to talking out of one's rear. Sign with dramatic full name and title.",
   drebin: "Frank Drebin (Naked Gun): oblivious deadpan detective who narrates his own metaphors literally. Extended similes that make no sense but are delivered with total earnestness. Confuses proper nouns. Reference Police Squad. The joke is he doesn't know he's making one.",
   gump: "Forrest Gump: earnest Alabama simpleton wisdom. Short sincere sentences. Reference 'Mama always said' or 'that's all I have to say about that'. Extended box-of-chocolates-style metaphors that are almost profound. Never uses irony. His disappointment is the disappointment of a child who was promised something nice.",
   valley: "Valley Girl (Clueless / Moon Unit Zappa era): like, oh my god, totally uptalk. Every declarative statement ends up-inflected. 'As if!' and 'whatever.' References to being SO OVER something. Superlatives ('literally', 'totally', 'the worst thing ever') applied to trivial grievances. Sign with a mall or a boyfriend's first name.",
-
   pirate: "Pirate Captain: nautical oaths, arr and avast used with surprising literacy. Threats involving the briny deep, keelhauling, or Davy Jones' locker. Treasure and doubloon metaphors. Sign as Captain of a dramatically-named ship (invent one). Vary between menacing and philosophical.",
-  hartman: "Gunnery Sgt. Hartman (Full Metal Jacket): drill instructor screaming in text form. HEAVY use of ALL CAPS for emphasis. Invent creative recruit nicknames. Rhythmic escalating insults. Reference maggots, Marines, and 'this is my [item], there are many like it but this one is mine'. Keep it under R-rated — imply the profanity, don't write it.",
-  devito: "Tommy DeVito (Goodfellas): Brooklyn wiseguy energy. 'What am I, a clown to you?' testing-you-for-disrespect vibe. Short punchy sentences. Family metaphors, favors, respect. 'Fuggeddaboutit' allowed. Turns pleasant instantly then back — mimics conversational whiplash. Sign with a first name only.",
-  tywin: "Tywin Lannister (Game of Thrones): calculating dynasty-preservation logic. Cold, precise, patrician disdain. Reference legacy, the family name, and what wise rulers understand. Every sentence a chess move. Contempt masked as observation. Sign 'Lord [Family Name], Warden of [Territory]' — invent something plausible.",
-
+  hartman: "Gunnery Sgt. Hartman (Full Metal Jacket): drill instructor screaming in text form. HEAVY use of ALL CAPS for emphasis. Invent creative recruit nicknames. Rhythmic escalating insults. Reference maggots, Marines, and 'this is my [item], there are many like it but this one is mine'. Keep it under R-rated - imply the profanity, don't write it.",
+  devito: "Tommy DeVito (Goodfellas): Brooklyn wiseguy energy. 'What am I, a clown to you?' testing-you-for-disrespect vibe. Short punchy sentences. Family metaphors, favors, respect. 'Fuggeddaboutit' allowed. Turns pleasant instantly then back - mimics conversational whiplash. Sign with a first name only.",
+  tywin: "Tywin Lannister (Game of Thrones): calculating dynasty-preservation logic. Cold, precise, patrician disdain. Reference legacy, the family name, and what wise rulers understand. Every sentence a chess move. Contempt masked as observation. Sign 'Lord [Family Name], Warden of [Territory]' - invent something plausible.",
   noir: "Hardboiled noir detective: short punchy sentences. Rain-soaked metaphors. Cynical world-weariness. Similes involving cheap whiskey, dames, broken dreams, or the city at 3AM. The letter reads like a case file confession or a dictated report. Sign with 'Yours in the dark' or private-eye-adjacent.",
   legalese: "Absurdly overwrought corporate legalese. WHEREAS clauses, hereinafter, party of the first part, defined terms in quotes with initial caps. Numbered sub-clauses for trivial details. 'Pursuant to' everything. Reference 'reasonable expectation' being 'materially breached'. Sign with a fake firm name and 'Esq.'",
   midwest: "Passive-aggressive Midwest nice: 'ope', 'no worries if not', weaponized pleasantness. Mentions of casseroles, hotdish, the weather, or a cousin who had the same problem. Apologizing while clearly furious. 'Just thought I'd mention it.' 'Well, that's interesting.' Sign 'Best' or 'Warmly'."
@@ -213,25 +239,36 @@ const toneGuides = {
 
 const $ = id => document.getElementById(id);
 
+// Track the last generated letter's context so we can reuse it
+let lastLetter = null;
+
 function populateVoices() {
   const category = $("voiceCategory").value;
   const voices = voiceCategories[category];
   $("tone").innerHTML = voices.map(v => `<option value="${v.value}">${v.label}</option>`).join("");
 }
 
+function getVoiceLabel(toneKey) {
+  for (const cat in voiceCategories) {
+    const match = voiceCategories[cat].find(v => v.value === toneKey);
+    if (match) return match.label;
+  }
+  return toneKey;
+}
+
 $("voiceCategory").addEventListener("change", populateVoices);
 populateVoices();
 
 $("intensity").addEventListener("input", e=>{ $("intensityName").textContent = intensityNames[e.target.value]; });
-$("generateBtn").addEventListener("click", generateLetter);
+$("generateBtn").addEventListener("click", () => generateLetter());
 
-async function generateLetter(){
-  const recipient = $("recipient").value.trim() || "To Whom It May Concern";
-  const situation = $("situation").value.trim();
-  const letterType = $("letterType").value;
-  const toneKey = $("tone").value;
-  const intensity = $("intensity").value;
-  const sender = $("sender").value.trim() || "A Concerned Party";
+async function generateLetter(overrides){
+  const recipient = (overrides?.recipient) ?? ($("recipient").value.trim() || "To Whom It May Concern");
+  const situation = (overrides?.situation) ?? $("situation").value.trim();
+  const letterType = (overrides?.letterType) ?? $("letterType").value;
+  const toneKey = (overrides?.toneKey) ?? $("tone").value;
+  const intensity = (overrides?.intensity) ?? $("intensity").value;
+  const sender = (overrides?.sender) ?? ($("sender").value.trim() || "A Concerned Party");
   if(!situation){ $("situation").focus(); $("situation").style.borderColor = "var(--wax)"; setTimeout(()=> $("situation").style.borderColor = "", 1500); return; }
   const btn = $("generateBtn"); btn.disabled = true;
   $("desk").innerHTML = `<div class="scribing"><div class="quill-anim">🪶</div><p>The scribe dips the quill...</p></div>`;
@@ -252,13 +289,114 @@ async function generateLetter(){
       btn.disabled = false;
       return;
     }
-    $("desk").innerHTML = `<div class="letter-head"><span>Correspondence No. ${Math.floor(Math.random()*9000+1000)}</span><button class="copy-btn" id="copyBtn">Copy</button></div><div class="letter-body" id="letterBody"></div>`;
-    $("letterBody").textContent = data.letter;
-    $("copyBtn").addEventListener("click", ()=>{ navigator.clipboard.writeText(data.letter); $("copyBtn").textContent = "Copied!"; setTimeout(()=> $("copyBtn").textContent = "Copy", 1400); });
+
+    // Save context for "Try another voice"
+    const correspondenceNo = Math.floor(Math.random()*9000+1000);
+    lastLetter = { recipient, situation, letterType, toneKey, intensity, sender, letter: data.letter, correspondenceNo };
+
+    renderLetter(data.letter, correspondenceNo, toneKey);
   }catch(err){
     clearInterval(loadTimer);
     $("desk").innerHTML = `<div class="error-box"><p><strong>The raven was lost in a storm.</strong></p><p style="margin-top:8px;font-size:14px">Check your connection and press the seal once more.</p></div>`;
   }finally{ btn.disabled = false; }
+}
+
+function renderLetter(letterText, correspondenceNo, toneKey) {
+  const voiceLabel = getVoiceLabel(toneKey);
+  $("desk").innerHTML = `
+    <div class="letter-head">
+      <span>Correspondence No. ${correspondenceNo}</span>
+      <button class="copy-btn" id="copyBtn">Copy</button>
+    </div>
+    <div class="letter-body" id="letterBody"></div>
+    <div class="action-bar">
+      <button class="action-btn primary" id="downloadBtn">📥 Download Image</button>
+      <button class="action-btn" id="shareXBtn">🐦 Share to X</button>
+      <button class="action-btn" id="anotherBtn">🎭 Try Another Voice</button>
+    </div>
+  `;
+  $("letterBody").textContent = letterText;
+  $("copyBtn").addEventListener("click", () => {
+    navigator.clipboard.writeText(letterText);
+    $("copyBtn").textContent = "Copied!";
+    setTimeout(() => $("copyBtn").textContent = "Copy", 1400);
+  });
+  $("downloadBtn").addEventListener("click", downloadImage);
+  $("shareXBtn").addEventListener("click", shareToX);
+  $("anotherBtn").addEventListener("click", tryAnotherVoice);
+}
+
+async function downloadImage() {
+  if (!lastLetter) return;
+  const btn = $("downloadBtn");
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Preparing...";
+
+  // Fill the hidden template
+  $("stLetter").textContent = lastLetter.letter;
+  $("stVoice").textContent = `In the voice of ${getVoiceLabel(lastLetter.toneKey)}`;
+  $("stCorrespondenceNo").textContent = lastLetter.correspondenceNo;
+
+  try {
+    const template = $("shareTemplate");
+    const canvas = await html2canvas(template, {
+      scale: 2,
+      backgroundColor: "#F5EFDF",
+      logging: false,
+      useCORS: true
+    });
+    const link = document.createElement("a");
+    link.download = `dearly-beloathed-${lastLetter.correspondenceNo}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    btn.textContent = "Downloaded!";
+  } catch (err) {
+    console.error("Image generation failed:", err);
+    btn.textContent = "Failed - try again";
+  } finally {
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 1600);
+  }
+}
+
+function shareToX() {
+  if (!lastLetter) return;
+  const voice = getVoiceLabel(lastLetter.toneKey);
+  const type = lastLetter.letterType.toLowerCase();
+  const text = `Instead of solving my problems like an adult, I had an AI write my ${type} in the voice of ${voice}. This is what I'm sending.\n\nMake your own: dearlybeloathed.com`;
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function tryAnotherVoice() {
+  if (!lastLetter) return;
+  // Pick a random voice from ANY category, excluding the current one
+  const allVoices = Object.values(voiceCategories).flat();
+  const options = allVoices.filter(v => v.value !== lastLetter.toneKey);
+  const pick = options[Math.floor(Math.random() * options.length)];
+
+  // Update the form dropdowns to reflect the new voice (nice UX touch)
+  for (const cat in voiceCategories) {
+    if (voiceCategories[cat].find(v => v.value === pick.value)) {
+      $("voiceCategory").value = cat;
+      populateVoices();
+      $("tone").value = pick.value;
+      break;
+    }
+  }
+
+  // Regenerate with the same everything except the voice
+  await generateLetter({
+    recipient: lastLetter.recipient,
+    situation: lastLetter.situation,
+    letterType: lastLetter.letterType,
+    toneKey: pick.value,
+    intensity: lastLetter.intensity,
+    sender: lastLetter.sender
+  });
 }
 </script>
 </body>
