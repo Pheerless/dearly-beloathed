@@ -366,7 +366,20 @@ function shareToX() {
   if (!lastLetter) return;
   const voice = getVoiceLabel(lastLetter.toneKey);
   const type = lastLetter.letterType.toLowerCase();
-  const text = `Instead of solving my problems like an adult, I had an AI write my ${type} in the voice of ${voice}. This is what I'm sending.\n\nMake your own: dearlybeloathed.com`;
+  const recipient = lastLetter.recipient;
+
+  const variants = [
+    `Instead of solving my problems like an adult, I had an AI write my ${type} in the voice of ${voice}. This is what I'm sending.\n\nMake your own: dearlybeloathed.com`,
+    `Today I learned you can have an AI write your ${type} as ${voice}. I am now writing all of my correspondence this way.\n\ndearlybeloathed.com`,
+    `Wrote my ${type} to ${recipient} in the voice of ${voice}. No further explanation will be provided.\n\ndearlybeloathed.com`,
+    `A thing I did today: had an AI write my ${type} as ${voice}. A thing I regret: nothing.\n\ndearlybeloathed.com`,
+    `Ladies and gentlemen, my ${type} - as written by ${voice}. Please respect the artistry.\n\ndearlybeloathed.com`,
+    `If you have any ${type}s to send, may I suggest having an AI write them in the voice of ${voice}? I cannot go back to normal letters now.\n\ndearlybeloathed.com`,
+    `Just casually had ${voice} draft my ${type}. Feeling powerful.\n\ndearlybeloathed.com`,
+    `There is a website that will write your ${type} in the voice of ${voice}. I do not know how to feel about this. I have used it six times.\n\ndearlybeloathed.com`
+  ];
+
+  const text = variants[Math.floor(Math.random() * variants.length)];
   const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
